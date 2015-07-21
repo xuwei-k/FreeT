@@ -8,6 +8,9 @@ object FreeTTest extends Scalaprops {
 
   private[this] type OneOrTwo[A] = OneAnd[Maybe, A]
 
+  val isoFMPMaybe =
+    scalazlaws.iso.all(FMP.freeTFMPIso[Maybe].unlift[Int]).andThenParam(Param.maxSize(5))
+
   val monadTransMaybe =
     scalazlaws.monadTrans.all[({type l[m[_], a] = FreeT[Maybe, m, a]})#l]
 
