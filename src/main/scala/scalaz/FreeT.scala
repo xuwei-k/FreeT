@@ -34,8 +34,8 @@ object FreeT extends FreeTInstances {
     E: Lazy[Gen[M[FreeF[F, A, FreeT[F, M, A]]]]]
   ): Gen[FreeT[F, M, A]] = E.value.map(FreeT(_))
 
-  implicit def freeTMonad[F[_], M[_]](implicit F0: Functor[F], M0: Monad[M]): Monad[({type l[a] = FreeT[F, M, a]})#l] =
-    new FreeTMonad[F, M] {
+  implicit def freeTMonadPlus[F[_], M[_]](implicit F0: Functor[F], M0: MonadPlus[M]): MonadPlus[({type l[a] = FreeT[F, M, a]})#l] =
+    new FreeTMonadPlus[F, M] {
       def F = F0
       def M = M0
     }
@@ -57,9 +57,26 @@ object FreeT extends FreeTInstances {
 
   def point[F[_], M[_], A](a: => A)(implicit M: Applicative[M]): FreeT[F, M, A] =
     FreeT(M.point(Pure(a)))
+
+  def empty[F[_], M[_], A](implicit M: PlusEmpty[M]): FreeT[F, M, A] =
+    FreeT(M.empty)
 }
 
-sealed abstract class FreeTInstances {
+sealed abstract class FreeTInstances extends FreeTInstances0 {
+
+  implicit final def freeTMonad[F[_], M[_]](implicit F0: Functor[F], M0: Monad[M]): Monad[({type l[a] = FreeT[F, M, a]})#l] =
+    new FreeTMonad[F, M] {
+      def F = F0
+      def M = M0
+    }
+
+  implicit final def freeTPlusEmpty[F[_], M[_]](implicit M0: PlusEmpty[M]): PlusEmpty[({type l[a] = FreeT[F, M, a]})#l] =
+    new FreeTPlusEmpty[F, M] {
+      def M = M0
+    }
+}
+
+sealed abstract class FreeTInstances0 {
 
   implicit final def freeTFunctor[F[_], M[_]](implicit F0: Functor[F], M0: Functor[M]): Functor[({type l[a] = FreeT[F, M, a]})#l] =
     new FreeTFunctor[F, M] {
@@ -67,6 +84,10 @@ sealed abstract class FreeTInstances {
       def M = M0
     }
 
+  implicit final def freeTPlus[F[_], M[_]](implicit M0: Plus[M]): Plus[({type l[a] = FreeT[F, M, a]})#l] =
+    new FreeTPlus[F, M] {
+      def M = M0
+    }
 }
 
 private trait FreeTFunctor[F[_], M[_]] extends Functor[({type l[a] = FreeT[F, M, a]})#l] {
@@ -86,5 +107,23 @@ private trait FreeTMonad[F[_], M[_]] extends Monad[({type l[a] = FreeT[F, M, a]}
 
   override final def bind[A, B](fa: FreeT[F, M, A])(f: A => FreeT[F, M, B]) =
     fa flatMap f
+}
+
+private trait FreeTPlus[F[_], M[_]] extends Plus[({type l[a] = FreeT[F, M, a]})#l] {
+  protected[this] implicit def M: Plus[M]
+
+  override final def plus[A](a: FreeT[F, M, A], b: => FreeT[F, M, A]) =
+    FreeT(M.plus(a.run, b.run))
+}
+
+private trait FreeTPlusEmpty[F[_], M[_]] extends PlusEmpty[({type l[a] = FreeT[F, M, a]})#l] with FreeTPlus[F, M]{
+  protected[this] implicit def M: PlusEmpty[M]
+
+  override final def empty[A] =
+    FreeT.empty
+}
+
+private trait FreeTMonadPlus[F[_], M[_]] extends MonadPlus[({type l[a] = FreeT[F, M, a]})#l] with FreeTMonad[F, M] with FreeTPlusEmpty[F, M] {
+  protected[this] implicit def M: MonadPlus[M]
 }
 

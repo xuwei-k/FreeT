@@ -21,44 +21,53 @@ object FreeTTest extends Scalaprops {
 
   val idIList = {
     type F[A] = FreeT[Id, IList, A]
-    scalazlaws.monad.all[F]
+    scalazlaws.monadPlus.all[F]
   }.andThenParam(Param.maxSize(5))
 
   val idNel = {
     type F[A] = FreeT[Id, NonEmptyList, A]
-    scalazlaws.monad.all[F]
+    Properties.list(
+      scalazlaws.monad.all[F],
+      scalazlaws.plus.all[F]
+    )
   }.andThenParam(Param.maxSize(3))
 
   val idDisjunction = {
     type G[A] = Int \/ A
     type F[A] = FreeT[Id, G, A]
-    scalazlaws.monad.all[F]
+    Properties.list(
+      scalazlaws.monad.all[F],
+      scalazlaws.plus.all[F]
+    )
   }
 
   val disjunctionDisjunction = {
     type G[A] = Int \/ A
     type F[A] = FreeT[G, G, A]
-    scalazlaws.monad.all[F]
+    Properties.list(
+      scalazlaws.monad.all[F],
+      scalazlaws.plus.all[F]
+    )
   }
 
   val maybeMaybe = {
     type F[A] = FreeT[Maybe, Maybe, A]
-    scalazlaws.monad.all[F]
+    scalazlaws.monadPlus.all[F]
   }
 
   val maybeIList = {
     type F[A] = FreeT[Maybe, IList, A]
-    scalazlaws.monad.all[F]
+    scalazlaws.monadPlus.all[F]
   }.andThenParam(Param.maxSize(5))
 
   val iListMaybe = {
     type F[A] = FreeT[IList, Maybe, A]
-    scalazlaws.monad.all[F]
+    scalazlaws.monadPlus.all[F]
   }.andThenParam(Param.maxSize(5))
 
   val iListIList = {
     type F[A] = FreeT[IList, IList, A]
-    scalazlaws.monad.all[F]
+    scalazlaws.monadPlus.all[F]
   }.andThenParam(Param.maxSize(2))
 
   val iListId = {
@@ -68,11 +77,14 @@ object FreeTTest extends Scalaprops {
 
   val maybeOneOrTwo = {
     type F[A] = FreeT[Maybe, OneOrTwo, A]
-    scalazlaws.monad.all[F]
+    Properties.list(
+      scalazlaws.monad.all[F],
+      scalazlaws.plus.all[F]
+    )
   }
 
   val oneOrTwoMaybe = {
     type F[A] = FreeT[OneOrTwo, Maybe, A]
-    scalazlaws.monad.all[F]
+    scalazlaws.monadPlus.all[F]
   }
 }
