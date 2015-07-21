@@ -8,6 +8,12 @@ object FreeTTest extends Scalaprops {
 
   private[this] type OneOrTwo[A] = OneAnd[Maybe, A]
 
+  val monadTransMaybe =
+    scalazlaws.monadTrans.all[({type l[m[_], a] = FreeT[Maybe, m, a]})#l]
+
+  val monadTransIList =
+    scalazlaws.monadTrans.all[({type l[m[_], a] = FreeT[IList, m, a]})#l]
+
   val idId = {
     type F[A] = FreeT[Id, Id, A]
     scalazlaws.monad.all[F]

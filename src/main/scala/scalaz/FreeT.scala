@@ -20,6 +20,8 @@ final case class FreeT[F[_], M[_], A](run: M[FreeF[F, A, FreeT[F, M, A]]]) {
         M.point(Impure(F.map(a)(_.flatMap(f))))
     })
 
+  def hoist[N[_]](f: M ~> N)(implicit F: Functor[F], M: Functor[M]): FreeT[F, N, A] =
+    FreeT(f(M.map(run)(_.map(_.hoist(f)))))
 }
 
 object FreeT extends FreeTInstances {
@@ -36,6 +38,21 @@ object FreeT extends FreeTInstances {
     new FreeTMonad[F, M] {
       def F = F0
       def M = M0
+    }
+
+  implicit def freeTMonadHoist[F[_]: Functor]: Hoist[({type l[m[_], a] = FreeT[F, m, a]})#l] =
+    new Hoist[({type l[m[_], a] = FreeT[F, m, a]})#l] {
+      def hoist[M[_]: Monad, N[_]](f: M ~> N) =
+        new (({type l[x] = FreeT[F, M, x]})#l ~> ({type l[x] = FreeT[F, N, x]})#l) {
+          def apply[A](fa: FreeT[F, M, A]) =
+            fa.hoist(f)
+        }
+
+      def liftM[G[_], A](a: G[A])(implicit G: Monad[G]) =
+        FreeT(G.map(a)(FreeF.pure(_)))
+
+      def apply[G[_]: Monad] =
+        freeTMonad[F, G]
     }
 
   def point[F[_], M[_], A](a: => A)(implicit M: Applicative[M]): FreeT[F, M, A] =
