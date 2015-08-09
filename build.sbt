@@ -10,7 +10,7 @@ licenses := Seq("MIT License" -> url("http://opensource.org/licenses/mit"))
 
 scalapropsWithScalazlaws
 
-scalapropsVersion := "0.1.11"
+scalapropsVersion := "0.1.12"
 
 scalacOptions ++= (
   "-deprecation" ::
