@@ -2,7 +2,7 @@ package scalaz
 
 import shapeless.Lazy
 
-import scalaprops.{Cogen, Gen}
+import scalaprops.{Cogen, CogenState, Gen}
 
 final case class CofreeT[F[_], W[_], A](run: W[CofreeF[F, A, CofreeT[F, W, A]]]) {
   def map[B](f: A => B)(implicit F: Functor[F], W: Functor[W]): CofreeT[F, W, B] =
@@ -33,7 +33,10 @@ object CofreeT extends CofreeTInstances {
   implicit def cofreeTEqual[F[_], W[_], A](
     implicit W: Lazy[Equal[W[CofreeF[F, A, CofreeT[F, W, A]]]]]
   ): Equal[CofreeT[F, W, A]] =
-    W.value.contramap(_.run)
+    new Equal[CofreeT[F, W, A]] {
+      def equal(a: CofreeT[F, W, A], b: CofreeT[F, W, A]) =
+        W.value.equal(a.run, b.run)
+    }
 
   implicit def cofreeTGen[F[_], W[_], A](
     implicit W: Lazy[Gen[W[CofreeF[F, A, CofreeT[F, W, A]]]]]
@@ -43,7 +46,10 @@ object CofreeT extends CofreeTInstances {
   implicit def cofreeTCogen[F[_], W[_], A](
     implicit W: Lazy[Cogen[W[CofreeF[F, A, CofreeT[F, W, A]]]]]
   ): Cogen[CofreeT[F, W, A]] =
-    W.value.contramap(_.run)
+    new Cogen[CofreeT[F, W, A]] {
+      def cogen[B](a: CofreeT[F, W, A], g: CogenState[B]) =
+        W.value.cogen(a.run, g)
+    }
 }
 
 
